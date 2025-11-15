@@ -5,3 +5,4 @@ experiments/atari/data
 experiments/meta-world/data
 venv/
 .DS_Store
+logs/
