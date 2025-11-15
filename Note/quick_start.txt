@@ -1,0 +1,12 @@
+Quick start
+To activate the environment and start working:
+cd /scratch/yd2247/Self-componentRL
+source venv/bin/activate
+
+To see available options for running experiments:
+python experiments/atari/run_ppo.py --help
+
+Important notes
+NumPy compatibility: There's a warning about NumPy 2.0.2, but packages import successfully. If you encounter issues, downgrade with: pip install "numpy<2"
+Meta-World experiments: If you need Meta-World experiments, install separately:
+   pip install -r experiments/meta-world/requirements.txt
