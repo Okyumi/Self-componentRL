@@ -30,17 +30,32 @@ class CompoNetAgent(nn.Module):
 
         self.net_logstd = net(obs_dim, act_dim)
 
+        # PYTORCH 2.6+ COMPATIBILITY: weights_only=False needed for custom classes
+        # Original code:
+        # prev_units = [
+        #     FirstModuleWrapper(
+        #         model=torch.load(
+        #             f"{prev_paths[0]}/model.pt", map_location=map_location
+        #         ),
+        #         ret_probs=False,
+        #         transform_output=take_first,
+        #     )
+        # ]
+        # prev_units += [
+        #     torch.load(f"{p}/net_mean.pt", map_location=map_location)
+        #     for p in prev_paths[1:]
+        # ]
         prev_units = [
             FirstModuleWrapper(
                 model=torch.load(
-                    f"{prev_paths[0]}/model.pt", map_location=map_location
+                    f"{prev_paths[0]}/model.pt", map_location=map_location, weights_only=False
                 ),
                 ret_probs=False,
                 transform_output=take_first,
             )
         ]
         prev_units += [
-            torch.load(f"{p}/net_mean.pt", map_location=map_location)
+            torch.load(f"{p}/net_mean.pt", map_location=map_location, weights_only=False)
             for p in prev_paths[1:]
         ]
 
@@ -99,11 +114,17 @@ class CompoNetAgent(nn.Module):
             prevs_paths=prevs_paths,
             map_location=map_location,
         )
+        # PYTORCH 2.6+ COMPATIBILITY: weights_only=False needed for custom classes
+        # Original code:
+        # model.net_logstd = torch.load(
+        #     f"{dirname}/net_logstd.pt", map_location=map_location
+        # )
+        # net_mean = torch.load(f"{dirname}/net_logstd.pt", map_location=map_location)
         model.net_logstd = torch.load(
-            f"{dirname}/net_logstd.pt", map_location=map_location
+            f"{dirname}/net_logstd.pt", map_location=map_location, weights_only=False
         )
 
-        net_mean = torch.load(f"{dirname}/net_logstd.pt", map_location=map_location)
+        net_mean = torch.load(f"{dirname}/net_logstd.pt", map_location=map_location, weights_only=False)
 
         curr = model.net_mean.state_dict()
         other = net_mean.state_dict()

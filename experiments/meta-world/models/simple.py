@@ -32,7 +32,10 @@ class SimpleAgent(nn.Module):
         torch.save(self, f"{dirname}/model.pt")
 
     def load(dirname, map_location=None, reset_heads=False):
-        model = torch.load(f"{dirname}/model.pt", map_location=map_location)
+        # PYTORCH 2.6+ COMPATIBILITY: weights_only=False needed for custom classes
+        # Original code:
+        # model = torch.load(f"{dirname}/model.pt", map_location=map_location)
+        model = torch.load(f"{dirname}/model.pt", map_location=map_location, weights_only=False)
         if reset_heads:
             model.reset_heads()
         return model

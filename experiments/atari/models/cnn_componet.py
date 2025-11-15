@@ -24,8 +24,13 @@ class CnnCompoNetAgent(nn.Module):
         if not finetune_encoder or len(prevs_paths) == 0:
             self.encoder = CnnEncoder(hidden_dim=hidden_dim, layer_init=layer_init)
         else:
+            # PYTORCH 2.6+ COMPATIBILITY: weights_only=False needed for custom classes
+            # Original code:
+            # self.encoder = torch.load(
+            #     f"{prevs_paths[-1]}/encoder.pt", map_location=map_location
+            # )
             self.encoder = torch.load(
-                f"{prevs_paths[-1]}/encoder.pt", map_location=map_location
+                f"{prevs_paths[-1]}/encoder.pt", map_location=map_location, weights_only=False
             )
             print("==> Encoder loaded from last CompoNet module")
 
@@ -39,8 +44,14 @@ class CnnCompoNetAgent(nn.Module):
         )
 
         if len(prevs_paths) > 0:
+            # PYTORCH 2.6+ COMPATIBILITY: weights_only=False needed for custom classes
+            # Original code:
+            # previous_units = [
+            #     torch.load(f"{p}/actor.pt", map_location=map_location)
+            #     for p in prevs_paths
+            # ]
             previous_units = [
-                torch.load(f"{p}/actor.pt", map_location=map_location)
+                torch.load(f"{p}/actor.pt", map_location=map_location, weights_only=False)
                 for p in prevs_paths
             ]
             self.actor = CompoNet(
@@ -66,9 +77,24 @@ class CnnCompoNetAgent(nn.Module):
         self, x, action=None, log_writter=None, global_step=None, prevs_to_noise=0
     ):
         if not self.is_compo or global_step is None or log_writter is None:
-            p, _phi, hidden = self.actor(
-                x, ret_encoder_out=True, prevs_to_noise=prevs_to_noise
-            )
+            # BUG FIX: FirstModuleWrapper doesn't accept prevs_to_noise parameter
+            # Only pass prevs_to_noise when self.is_compo is True (CompoNet accepts it)
+            # Original code (buggy):
+            # p, _phi, hidden = self.actor(
+            #     x, ret_encoder_out=True, prevs_to_noise=prevs_to_noise
+            # )
+            # Fixed version:
+            if self.is_compo:
+                # When is_compo is True but we're in this branch (global_step/log_writter is None),
+                # we still need to pass prevs_to_noise to CompoNet
+                p, _phi, hidden = self.actor(
+                    x, ret_encoder_out=True, prevs_to_noise=prevs_to_noise
+                )
+            else:
+                # When is_compo is False, self.actor is FirstModuleWrapper which doesn't accept prevs_to_noise
+                p, _phi, hidden = self.actor(
+                    x, ret_encoder_out=True
+                )
         else:
             p, _phi, hidden, att_in, att_out, int_pol, head_out = self.actor(
                 x,
@@ -126,15 +152,20 @@ class CnnCompoNetAgent(nn.Module):
         model = CnnCompoNetAgent(
             envs=envs, prevs_paths=prevs_paths, map_location=map_location
         )
-        model.encoder = torch.load(f"{dirname}/encoder.pt", map_location=map_location)
+        # PYTORCH 2.6+ COMPATIBILITY: weights_only=False needed for custom classes
+        # Original code:
+        # model.encoder = torch.load(f"{dirname}/encoder.pt", map_location=map_location)
+        # actor = torch.load(f"{dirname}/actor.pt", map_location=map_location)
+        # model.critic = torch.load(f"{dirname}/crititc.pt", map_location=map_location)
+        model.encoder = torch.load(f"{dirname}/encoder.pt", map_location=map_location, weights_only=False)
 
         # load the state dict of the actor
-        actor = torch.load(f"{dirname}/actor.pt", map_location=map_location)
+        actor = torch.load(f"{dirname}/actor.pt", map_location=map_location, weights_only=False)
         curr = model.actor.state_dict()
         other = actor.state_dict()
         for k in other:
             curr[k] = other[k]
         model.actor.load_state_dict(curr)
 
-        model.critic = torch.load(f"{dirname}/crititc.pt", map_location=map_location)
+        model.critic = torch.load(f"{dirname}/crititc.pt", map_location=map_location, weights_only=False)
         return model

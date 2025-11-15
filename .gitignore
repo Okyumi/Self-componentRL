@@ -6,3 +6,4 @@ experiments/meta-world/data
 venv/
 .DS_Store
 logs/
+*.pt

@@ -10,8 +10,14 @@ class ProgressiveNetAgent(nn.Module):
         self.obs_dim = obs_dim
 
         if len(prev_paths) > 0:
+            # PYTORCH 2.6+ COMPATIBILITY: weights_only=False needed for custom classes
+            # Original code:
+            # prevs = [
+            #     torch.load(f"{p}/prognet.pt", map_location=map_location)
+            #     for p in prev_paths
+            # ]
             prevs = [
-                torch.load(f"{p}/prognet.pt", map_location=map_location)
+                torch.load(f"{p}/prognet.pt", map_location=map_location, weights_only=False)
                 for p in prev_paths
             ]
         else:
@@ -49,15 +55,20 @@ class ProgressiveNetAgent(nn.Module):
         dirname, obs_dim, act_dim, prev_paths, map_location=None, reset_heads=False
     ):
         model = ProgressiveNetAgent(obs_dim, act_dim, prev_paths, map_location)
-        model.fc = torch.load(f"{dirname}/model.pt", map_location=map_location)
+        # PYTORCH 2.6+ COMPATIBILITY: weights_only=False needed for custom classes
+        # Original code:
+        # model.fc = torch.load(f"{dirname}/model.pt", map_location=map_location)
+        # model.fc_mean = torch.load(f"{dirname}/fc_mean.pt", map_location=map_location)
+        # model.fc_logstd = torch.load(f"{dirname}/fc_logstd.pt", map_location=map_location)
+        model.fc = torch.load(f"{dirname}/model.pt", map_location=map_location, weights_only=False)
         if reset_heads:
             return model
         else:
             model.fc_mean = torch.load(
-                f"{dirname}/fc_mean.pt", map_location=map_location
+                f"{dirname}/fc_mean.pt", map_location=map_location, weights_only=False
             )
             model.fc_logstd = torch.load(
-                f"{dirname}/fc_logstd.pt", map_location=map_location
+                f"{dirname}/fc_logstd.pt", map_location=map_location, weights_only=False
             )
         return model
 

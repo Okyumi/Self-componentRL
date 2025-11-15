@@ -38,9 +38,16 @@ class CnnSimpleAgent(nn.Module):
 
     def load(dirname, envs, load_critic=True, reset_actor=False, map_location=None):
         model = CnnSimpleAgent(envs)
-        model.network = torch.load(f"{dirname}/encoder.pt", map_location=map_location)
+        # PYTORCH 2.6+ COMPATIBILITY: weights_only=False needed for custom classes
+        # Original code:
+        # model.network = torch.load(f"{dirname}/encoder.pt", map_location=map_location)
+        # if not reset_actor:
+        #     model.actor = torch.load(f"{dirname}/actor.pt", map_location=map_location)
+        # if load_critic:
+        #     model.critic = torch.load(f"{dirname}/critic.pt", map_location=map_location)
+        model.network = torch.load(f"{dirname}/encoder.pt", map_location=map_location, weights_only=False)
         if not reset_actor:
-            model.actor = torch.load(f"{dirname}/actor.pt", map_location=map_location)
+            model.actor = torch.load(f"{dirname}/actor.pt", map_location=map_location, weights_only=False)
         if load_critic:
-            model.critic = torch.load(f"{dirname}/critic.pt", map_location=map_location)
+            model.critic = torch.load(f"{dirname}/critic.pt", map_location=map_location, weights_only=False)
         return model

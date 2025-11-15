@@ -44,7 +44,10 @@ class PackNetAgent(nn.Module):
     def load(
         dirname, task_id=None, restart_heads=False, freeze_bias=True, map_location=None
     ):
-        model = torch.load(f"{dirname}/packnet.pt", map_location=map_location)
+        # PYTORCH 2.6+ COMPATIBILITY: weights_only=False needed for custom classes
+        # Original code:
+        # model = torch.load(f"{dirname}/packnet.pt", map_location=map_location)
+        model = torch.load(f"{dirname}/packnet.pt", map_location=map_location, weights_only=False)
         model.retrain_mode = False
 
         if task_id is not None:

@@ -17,8 +17,14 @@ class ProgressiveNetAgent(nn.Module):
         super().__init__()
         hidden_dim = 512
 
+        # PYTORCH 2.6+ COMPATIBILITY: weights_only=False needed for custom classes
+        # Original code:
+        # prevs = [
+        #     torch.load(f"{p}/encoder.pt", map_location=map_location)
+        #     for p in prevs_paths
+        # ]
         prevs = [
-            torch.load(f"{p}/encoder.pt", map_location=map_location)
+            torch.load(f"{p}/encoder.pt", map_location=map_location, weights_only=False)
             for p in prevs_paths
         ]
 
@@ -56,9 +62,14 @@ class ProgressiveNetAgent(nn.Module):
 
     def load(dirname, envs, prevs_paths, map_location=None):
         model = ProgressiveNetAgent(envs=envs, prevs_paths=prevs_paths)
-        model.actor = torch.load(f"{dirname}/actor.pt", map_location=map_location)
-        model.encoder = torch.load(f"{dirname}/encoder.pt", map_location=map_location)
-        model.critic = torch.load(f"{dirname}/critic.pt", map_location=map_location)
+        # PYTORCH 2.6+ COMPATIBILITY: weights_only=False needed for custom classes
+        # Original code:
+        # model.actor = torch.load(f"{dirname}/actor.pt", map_location=map_location)
+        # model.encoder = torch.load(f"{dirname}/encoder.pt", map_location=map_location)
+        # model.critic = torch.load(f"{dirname}/critic.pt", map_location=map_location)
+        model.actor = torch.load(f"{dirname}/actor.pt", map_location=map_location, weights_only=False)
+        model.encoder = torch.load(f"{dirname}/encoder.pt", map_location=map_location, weights_only=False)
+        model.critic = torch.load(f"{dirname}/critic.pt", map_location=map_location, weights_only=False)
         return model
 
 
