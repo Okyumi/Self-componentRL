@@ -1,0 +1,86 @@
+Answering your questions and creating simpler scripts. Checking the code to understand `num_modes`:
+
+
+[2 tools called]
+
+
+Creating simpler scripts. Answers:
+1. `num_modes`: number of task modes/variations per environment
+   - Atari: SpaceInvaders=10, Freeway=8
+   - Meta-World: 20 (or 10 for "simple")
+2. Job arrays: not used because continual learning requires sequential task execution (each task depends on previous ones).
+3. Total tasks: 2 envs × 5 algorithms × (10+8 modes) = 180 Atari runs, plus 6 algorithms × 20 modes = 120 Meta-World runs = 300 total.
+
+Creating two simple scripts (one for Atari, one for Meta-World) that run one algorithm, one seed, sequentially:
+
+
+[3 tools called]
+
+
+## Answers to your questions
+
+### 1. What is `num_modes`?
+`num_modes` is the number of task variations/modes per environment:
+- Atari SpaceInvaders: 10 modes (0-9)
+- Atari Freeway: 8 modes (0-7)
+- Meta-World: 20 modes (0-19) for most algorithms, 10 modes (0-9) for "simple"
+
+Each mode is a different task variation that the agent learns sequentially in continual learning.
+
+### 2. Why not use job arrays?
+Job arrays run tasks in parallel. In continual RL, tasks must run sequentially because:
+- Each task depends on the previous task's trained model
+- The script loads previous models via `--prev-units`
+- Parallel execution would break this dependency chain
+
+### 3. Total tasks in the original script
+- Atari: 2 environments × 5 algorithms × (10+8 modes average) ≈ 180 sequential task runs
+- Meta-World: 6 algorithms × 20 modes = 120 sequential task runs
+- Total: ~300 sequential task runs (very long runtime)
+
+## New simple scripts
+
+Two scripts that run one algorithm, one seed, sequentially:
+
+### `run_atari_single.sh`
+```bash
+# Usage:
+sbatch run_atari_single.sh <algorithm> <env> <seed>
+
+# Examples:
+sbatch run_atari_single.sh componet ALE/SpaceInvaders-v5 42
+sbatch run_atari_single.sh finetune ALE/Freeway-v5 123
+```
+
+### `run_metaworld_single.sh`
+```bash
+# Usage:
+sbatch run_metaworld_single.sh <algorithm> <seed>
+
+# Examples:
+sbatch run_metaworld_single.sh componet 42
+sbatch run_metaworld_single.sh simple 123
+```
+
+These scripts:
+- Run one algorithm with one seed
+- Execute tasks sequentially (as required for continual learning)
+- Use default CLI options from the paper
+- Do not modify `run_experiments.py`
+- Are easier to manage and debug
+
+To run multiple setups, submit multiple jobs with different parameters.
+
+# Option 1: Use the helper script
+./scripts/view_tensorboard.sh atari
+./scripts/view_tensorboard.sh metaworld
+
+# Option 2: Manual (activate venv first)
+cd /scratch/yd2247/SelfcomponentRL
+source venv/bin/activate
+tensorboard --logdir experiments/atari/runs
+# or
+tensorboard --logdir experiments/meta-world/runs
+
+
+sbatch run_atari_single.sh componet ALE/Freeway-v5 0

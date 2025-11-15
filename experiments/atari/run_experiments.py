@@ -1,7 +1,6 @@
 import subprocess
 import argparse
 import random
-import os
 from task_utils import TASKS
 
 
@@ -16,8 +15,6 @@ def parse_args():
     parser.add_argument("--start-mode", type=int, required=True)
     parser.add_argument("--first-mode", type=int, required=True)
     parser.add_argument("--last-mode", type=int, required=True)
-    parser.add_argument("--track", default=True, action="store_true", help="if toggled, this experiment will be tracked with Weights and Biases")
-    parser.add_argument("--no-track", dest="track", action="store_false", help="disable wandb tracking")
     # fmt: on
     return parser.parse_args()
 
@@ -45,21 +42,6 @@ run_name = (
 )
 timesteps = int(1e6)
 
-# Initialize wandb if tracking is enabled
-if args.track:
-    import wandb
-    
-    experiment_run_name = f"{args.algorithm}__{args.env.replace('/', '-')}__seed_{seed}__start_{start_mode}"
-    wandb.init(
-        project="self-componentCRL-test",
-        entity=None,
-        sync_tensorboard=True,
-        config=vars(args),
-        name=experiment_run_name,
-        monitor_gym=True,
-        save_code=True,
-    )
-
 first_idx = modes.index(start_mode)
 for i, task_id in enumerate(modes[first_idx:]):
     params = f"--track --model-type={model_type} --env-id={args.env} --seed={seed}"
@@ -84,9 +66,7 @@ for i, task_id in enumerate(modes[first_idx:]):
     # Launch experiment
     cmd = f"python3 run_ppo.py {params}"
     print(cmd)
-    # Run from the atari directory so relative imports work
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    res = subprocess.run(cmd.split(" "), cwd=script_dir)
+    res = subprocess.run(cmd.split(" "))
     if res.returncode != 0:
         print(f"*** Process returned code {res.returncode}. Stopping on error.")
         quit(1)
